@@ -6,5 +6,8 @@ data
 dist
 .DS_Store
 
+# Per-project config (contains API key)
+.mindbrain.json
+
 # instant-grep index
 .ig/
