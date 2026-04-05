@@ -1,0 +1,43 @@
+## Memory — Mindbrain
+
+Memory is managed by Mindbrain (cloud-persistent). Do NOT use MEMORY.md or flat files.
+
+### Save memories
+```bash
+# Save a note (content via stdin or --file)
+echo "content" | mb save "Title" -t feedback --tags "auth,api"
+mb save "Title" -t project --tags "infra" -f notes.md
+```
+
+Types: `user` (about the user), `feedback` (behavioral rules), `project` (ongoing work), `reference` (external pointers), `codebase` (architecture/patterns), `debug` (solutions/pitfalls).
+
+### Recall memories
+```bash
+# Search by text
+mb search "auth middleware"
+
+# Get context-relevant memories (for current files + task)
+mb context -f src/auth.ts src/middleware.ts -t "fix login bug"
+
+# Show a specific note
+mb show <id>
+```
+
+### When to save
+- User corrects your approach → `mb save -t feedback`
+- User confirms non-obvious approach → `mb save -t feedback`
+- Architecture decision discovered → `mb save -t codebase`
+- Project context learned → `mb save -t project`
+- User role/preference learned → `mb save -t user`
+
+### When NOT to save
+- Code patterns visible in the codebase
+- Git history (use git log)
+- Ephemeral task state
+- Debugging steps (the fix is in the code)
+
+### Wikilinks
+Use `[[Note Title]]` in content to create links between notes:
+```bash
+echo "Rate limiter uses [[Auth System]] for token validation" | mb save "Rate Limiting" -t codebase
+```

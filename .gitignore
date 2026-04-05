@@ -5,3 +5,6 @@ data
 *.db-shm
 dist
 .DS_Store
+
+# instant-grep index
+.ig/

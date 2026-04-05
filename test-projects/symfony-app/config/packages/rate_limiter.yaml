@@ -1,0 +1,14 @@
+framework:
+    rate_limiter:
+        login:
+            policy: token_bucket
+            limit: 5
+            rate: { interval: '1 minute', amount: 3 }
+        api_global:
+            policy: sliding_window
+            limit: 100
+            interval: '1 minute'
+        register:
+            policy: fixed_window
+            limit: 3
+            interval: '1 hour'

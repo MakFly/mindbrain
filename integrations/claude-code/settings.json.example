@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/settings.schema.json",
+  "_comment": "Mindbrain hooks for Claude Code — merge into your .claude/settings.json",
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "bash /path/to/mindbrain/integrations/claude-code/hooks/session-start.sh"
+      }
+    ],
+    "PreCompact": [
+      {
+        "type": "command",
+        "command": "bash /path/to/mindbrain/integrations/claude-code/hooks/pre-compact.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "bash /path/to/mindbrain/integrations/claude-code/hooks/post-write-memory.sh",
+        "matcher": {
+          "tool": "Write",
+          "path": "**/memory/**"
+        }
+      }
+    ]
+  }
+}
