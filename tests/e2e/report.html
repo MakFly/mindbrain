@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mindbrain E2E Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-purple-900/60 via-blue-900/60 to-purple-900/60 border-b border-gray-800">
+    <div class="max-w-4xl mx-auto px-6 py-8">
+      <h1 class="text-3xl font-bold tracking-tight">
+        <span class="mr-2">🧠</span> Mindbrain E2E Test Report
+      </h1>
+      <p class="text-gray-400 text-sm mt-2">2026-04-05 22:29:53 &middot; 0.10s total</p>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-8 space-y-6">
+    <!-- Summary Bar -->
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-6">
+          <div>
+            <span class="text-2xl font-bold text-emerald-400">10</span>
+            <span class="text-gray-500 text-sm ml-1">passed</span>
+          </div>
+          
+          <div>
+            <span class="text-lg text-gray-400">44/44</span>
+            <span class="text-gray-500 text-sm ml-1">subtests</span>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="text-3xl font-bold text-emerald-400">100%</span>
+        </div>
+      </div>
+      <div class="bg-gray-800 rounded-full h-3 overflow-hidden">
+        <div class="bg-gradient-to-r from-emerald-500 to-emerald-400 h-3 rounded-full transition-all duration-500" style="width: 100%"></div>
+      </div>
+    </div>
+
+    <!-- Test Cards -->
+    <div class="space-y-3">
+      
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T1</span>
+              <h3 class="text-base font-semibold text-gray-100">Auth &amp; Project Lifecycle</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.01s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              5/5 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Create project → 201, apiKey starts with mb_</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /notes with valid key → 200</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /notes with invalid key → 401</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /notes without key → 401</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /projects/:id/stats → has noteCount, edgeCount, tagCount</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T2</span>
+              <h3 class="text-base font-semibold text-gray-100">Notes CRUD</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.01s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              5/5 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">POST /notes → 201, has id, title, type, tags</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /notes/:id → matches created data</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">PUT /notes/:id with new title → 200, title changed</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">DELETE /notes/:id → 204</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /notes/:id after delete → 404</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T3</span>
+              <h3 class="text-base font-semibold text-gray-100">Wikilinks Auto-Edges</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.01s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              4/4 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Create note A with [[NoteB]] and [[NoteC]] → 2 edges</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Create NoteB → edge A→NoteB has non-null targetId</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Create NoteC → dangling edge resolved</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Update A to [[NoteB]] only → edge to NoteC deleted</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T4</span>
+              <h3 class="text-base font-semibold text-gray-100">FTS5 Search</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.01s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              4/4 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Search &#039;auth&#039; → at least 2 results</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Search &#039;fix rate limiting bug&#039; → returns Rate limiting setup (OR mode)</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Search &#039;auth&#039; with type=codebase → only codebase</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Search &#039;testing&#039; with tags=testing → respects tag filter</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T5</span>
+              <h3 class="text-base font-semibold text-gray-100">Context Search</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.00s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              3/3 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">POST /search/context with files → file-boosted note ranks higher</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Response has &#039;markdown&#039; field</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Unrelated task + no files → empty or minimal results</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T6</span>
+              <h3 class="text-base font-semibold text-gray-100">Graph Traversal</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.00s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              4/4 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /graph?noteId=A&amp;depth=1 → nodes include A and B</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /graph?noteId=A&amp;depth=2 → nodes include A, B, C</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /graph (full) → all 4 nodes, all edges</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /graph/notes/B/backlinks → returns A</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T7</span>
+              <h3 class="text-base font-semibold text-gray-100">Short ID Resolution</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.00s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              4/4 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Create note and derive short ID (8 chars)</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /notes/&lt;shortId&gt; → same note returned</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">PUT /notes/&lt;shortId&gt; → 200</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">DELETE /notes/&lt;shortId&gt; → 204</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T8</span>
+              <h3 class="text-base font-semibold text-gray-100">Import/Export Round-trip</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.06s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              5/5 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /notes → list all 3 notes</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Each note has correct type</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Each note has correct tags</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Each note has correct content</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Update note → updatedAt changes</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T9</span>
+              <h3 class="text-base font-semibold text-gray-100">Edge Cases</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.00s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              5/5 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Empty content → 201</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">500-char title → 201</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Special chars (XSS payload) → stored verbatim</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Unicode content → preserved exactly</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Duplicate titles → both created and retrievable</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 transition-all duration-200 hover:border-gray-700 hover:shadow-lg hover:shadow-black/20">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-sm font-mono">T10</span>
+              <h3 class="text-base font-semibold text-gray-100">Multi-Project Isolation</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-gray-500 text-xs font-mono">0.00s</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">PASS</span>
+            </div>
+          </div>
+          <details  class="mt-2">
+            <summary class="text-gray-500 text-xs cursor-pointer hover:text-gray-400 transition-colors">
+              5/5 subtests passed
+            </summary>
+            <div class="mt-2 ml-2 space-y-0.5">
+              
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Create note in A with A&#039;s key</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Create note in B with B&#039;s key</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Search with A&#039;s key → only A&#039;s note</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">Search with B&#039;s key → only B&#039;s note</span>
+              
+            </div>
+            <div class="py-1.5 ">
+              <span>✅</span>
+              <span class="text-sm text-gray-300">GET /notes with A&#039;s key → only A&#039;s notes</span>
+              
+            </div>
+            </div>
+          </details>
+        </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800 mt-12">
+    <div class="max-w-4xl mx-auto px-6 py-6 text-center">
+      <p class="text-gray-600 text-xs">Generated by Mindbrain Test Runner &middot; 2026-04-05 22:29:53</p>
+    </div>
+  </footer>
+</body>
+</html>
