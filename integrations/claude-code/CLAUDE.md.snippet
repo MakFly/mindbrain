@@ -1,0 +1,26 @@
+## Memory — Mindbrain
+
+**Memory is managed by Mindbrain (cloud-persistent). Do NOT use MEMORY.md, auto-memory, or flat files.**
+
+### CRITICAL: Use Mindbrain context FIRST
+When answering questions, ALWAYS check your system-reminder for `[Mindbrain —` sections BEFORE exploring files. These contain verified project knowledge.
+
+### Save memories
+```bash
+echo "content" | mb save "Title" -t TYPE --tags "tag1,tag2"
+```
+Types: `user`, `feedback`, `project`, `reference`, `codebase`, `debug`.
+
+### Recall memories
+```bash
+mb search "query"
+mb context -f file1 file2 -t "task description"
+```
+
+### When to save
+- User corrects approach → `mb save -t feedback`
+- User confirms approach → `mb save -t feedback`
+- Architecture discovered → `mb save -t codebase`
+- Project context → `mb save -t project`
+
+**DO NOT save to `~/.claude/memory/` or MEMORY.md. Use `mb save` exclusively.**

@@ -11,6 +11,8 @@ import { linksCommand } from "./commands/links";
 import { editCommand } from "./commands/edit";
 import { importCommand } from "./commands/import";
 import { exportCommand } from "./commands/export";
+import { installCommand } from "./commands/install";
+import { uninstallCommand } from "./commands/uninstall";
 
 const program = new Command();
 
@@ -30,5 +32,7 @@ program.addCommand(linksCommand);
 program.addCommand(editCommand);
 program.addCommand(importCommand);
 program.addCommand(exportCommand);
+program.addCommand(installCommand);
+program.addCommand(uninstallCommand);
 
 program.parse();
