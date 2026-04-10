@@ -21,7 +21,7 @@ app.post("/", async (c) => {
 
 // GET /:id/stats — project statistics
 app.get("/:id/stats", async (c) => {
-  const projectId = c.req.param("id");
+  const projectId = c.get("projectId" as never) as string;
   const stats = await getProjectStats(projectId);
   return c.json(stats);
 });

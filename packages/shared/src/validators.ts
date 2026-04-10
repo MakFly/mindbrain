@@ -58,7 +58,7 @@ export const createLinkSchema = z.object({
   type: edgeTypeSchema.default("related"),
 });
 
-export const sourceTypeSchema = z.enum(["claude-mem", "mempalace", "flat-files", "cursor-rules"]);
+export const sourceTypeSchema = z.enum(["claude-mem", "mempalace", "flat-files", "cursor-rules", "mined"]);
 export const platformTypeSchema = z.enum(["claude-code", "cursor", "codex", "gemini"]);
 
 export const importSchema = z.object({
@@ -68,7 +68,7 @@ export const importSchema = z.object({
 });
 
 export const mineSchema = z.object({
-  platform: z.enum(["claude-code", "cursor", "codex", "auto"]).default("auto"),
+  platform: platformTypeSchema.or(z.literal("auto")).default("auto"),
   since: z.string().optional(),
   dryRun: z.boolean().default(false),
   llm: z.boolean().default(false),

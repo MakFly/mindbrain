@@ -58,7 +58,7 @@ export interface GraphResult {
   edges: Edge[];
 }
 
-export type SourceType = "claude-mem" | "mempalace" | "flat-files" | "cursor-rules";
+export type SourceType = "claude-mem" | "mempalace" | "flat-files" | "cursor-rules" | "mined";
 export type PlatformType = "claude-code" | "cursor" | "codex" | "gemini";
 export type SyncDirection = "import" | "export" | "bidirectional";
 
