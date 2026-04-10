@@ -1,6 +1,6 @@
-import { db } from "../db";
-import { projects, notes, edges } from "../db/schema";
-import { eq, count, sql } from "drizzle-orm";
+import { db, sqlite } from "../db";
+import { projects } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 export function generateApiKey(): string {
   const bytes = new Uint8Array(16);
@@ -50,24 +50,25 @@ export async function getProjectByKeyHash(hash: string) {
 }
 
 export async function getProjectStats(projectId: string) {
-  const [[noteResult], [edgeResult]] = await Promise.all([
-    db
-      .select({ count: count() })
-      .from(notes)
-      .where(eq(notes.projectId, projectId)),
-    db
-      .select({ count: count() })
-      .from(edges)
-      .where(
-        sql`${edges.sourceId} IN (SELECT id FROM notes WHERE project_id = ${projectId})`
-      ),
-  ]);
+  // Use raw SQL aggregation to avoid N+1 queries
+  const noteResult = sqlite
+    .query<{ count: number }, [string]>(
+      `SELECT COUNT(*) as count FROM notes WHERE project_id = ?1`
+    )
+    .get(projectId)!;
 
-  // Count distinct tags across all notes in the project
-  const tagRows = await db
-    .select({ tags: notes.tags })
-    .from(notes)
-    .where(eq(notes.projectId, projectId));
+  const edgeResult = sqlite
+    .query<{ count: number }, [string]>(
+      `SELECT COUNT(*) as count FROM edges WHERE source_id IN (SELECT id FROM notes WHERE project_id = ?1)`
+    )
+    .get(projectId)!;
+
+  // Aggregate distinct tags in JS — SQLite lacks native JSON array aggregation
+  const tagRows = sqlite
+    .query<{ tags: string }, [string]>(
+      `SELECT tags FROM notes WHERE project_id = ?1`
+    )
+    .all(projectId);
 
   const tagSet = new Set<string>();
   for (const row of tagRows) {

@@ -101,19 +101,25 @@ export function getSubGraph(noteId: string, depth: number = 2) {
 
 /**
  * Full project graph: all notes + all edges for a project.
+ * @param maxNodes - cap on the number of nodes returned (default 500) to prevent OOM on large projects.
  */
-export async function getFullGraph(projectId: string) {
+export async function getFullGraph(projectId: string, maxNodes: number = 500) {
   const allNotes = await db
     .select()
     .from(notes)
-    .where(eq(notes.projectId, projectId));
+    .where(eq(notes.projectId, projectId))
+    .limit(maxNodes);
 
-  const allEdges = await db
-    .select()
-    .from(edges)
-    .where(
-      sql`${edges.sourceId} IN (SELECT id FROM notes WHERE project_id = ${projectId})`
-    );
+  const noteIds = allNotes.map((n) => n.id);
+  if (noteIds.length === 0) return { nodes: [], edges: [] };
+
+  // Only fetch edges whose source is among the returned notes
+  const placeholders = noteIds.map(() => "?").join(",");
+  const allEdges = sqlite
+    .query<RawEdgeRow, string[]>(
+      `SELECT * FROM edges WHERE source_id IN (${placeholders})`
+    )
+    .all(...noteIds);
 
   return {
     nodes: allNotes.map((n) => ({
@@ -121,7 +127,7 @@ export async function getFullGraph(projectId: string) {
       tags: JSON.parse(n.tags) as string[],
       metadata: JSON.parse(n.metadata) as Record<string, unknown>,
     })),
-    edges: allEdges,
+    edges: allEdges.map(parseEdge),
   };
 }
 

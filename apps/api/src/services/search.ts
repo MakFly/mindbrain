@@ -22,17 +22,36 @@ export interface RawNoteRow {
 }
 
 /**
- * Sanitize a user query for FTS5: escape special operators and wrap words in quotes.
+ * Sanitize a user query for FTS5.
+ *
+ * Supports phrase search: quoted phrases (e.g. `"auth flow"`) are preserved as
+ * FTS5 phrase matches. Unquoted words are each individually quoted and joined
+ * with OR. Mixed example: `"auth flow" bug` → `"auth flow" OR "bug"`.
  */
 function sanitizeFtsQuery(raw: string): string {
-  // Remove FTS5 operators and special chars, then wrap each word in quotes
-  const cleaned = raw.replace(/[*"():^{}~\-+<>]/g, " ").trim();
-  if (!cleaned) return '""';
-  return cleaned
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((word) => `"${word}"`)
-    .join(" OR ");
+  const terms: string[] = [];
+
+  // Extract quoted phrases first, preserving them as FTS5 phrase matches
+  const phraseRegex = /"([^"]+)"/g;
+  let remainder = raw;
+  let match: RegExpExecArray | null;
+
+  while ((match = phraseRegex.exec(raw)) !== null) {
+    const phrase = match[1].trim();
+    if (phrase) terms.push(`"${phrase}"`);
+    // Remove the matched phrase from the remainder
+    remainder = remainder.replace(match[0], " ");
+  }
+
+  // Handle remaining unquoted text: strip FTS5 operators and stray quotes, then quote each word
+  const cleaned = remainder.replace(/[*"():^{}~\-+<>]/g, " ").trim();
+  if (cleaned) {
+    const words = cleaned.split(/\s+/).filter(Boolean);
+    for (const word of words) terms.push(`"${word}"`);
+  }
+
+  if (terms.length === 0) return '""';
+  return terms.join(" OR ");
 }
 
 function parseNoteRow(row: RawNoteRow) {
