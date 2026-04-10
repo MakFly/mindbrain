@@ -57,6 +57,20 @@ export function ensureTables() {
   `);
   sqlite.run(`CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source_id)`);
   sqlite.run(`CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id)`);
+  sqlite.run(`
+    CREATE TABLE IF NOT EXISTS sources_metadata (
+      id TEXT PRIMARY KEY,
+      note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+      source TEXT NOT NULL,
+      source_id TEXT NOT NULL,
+      imported_at INTEGER NOT NULL,
+      content_hash TEXT NOT NULL,
+      sync_direction TEXT NOT NULL DEFAULT 'import'
+    )
+  `);
+  sqlite.run(`CREATE INDEX IF NOT EXISTS idx_sources_note ON sources_metadata(note_id)`);
+  sqlite.run(`CREATE INDEX IF NOT EXISTS idx_sources_source ON sources_metadata(source)`);
+  sqlite.run(`CREATE INDEX IF NOT EXISTS idx_sources_hash ON sources_metadata(content_hash)`);
 }
 
 // Setup FTS5 virtual table and triggers

@@ -49,3 +49,23 @@ export const edges = sqliteTable(
     index("idx_edges_target").on(table.targetId),
   ]
 );
+
+export const sourcesMetadata = sqliteTable(
+  "sources_metadata",
+  {
+    id: text("id").primaryKey(),
+    noteId: text("note_id")
+      .notNull()
+      .references(() => notes.id, { onDelete: "cascade" }),
+    source: text("source").notNull(),
+    sourceId: text("source_id").notNull(),
+    importedAt: integer("imported_at", { mode: "number" }).notNull(),
+    contentHash: text("content_hash").notNull(),
+    syncDirection: text("sync_direction").notNull().default("import"),
+  },
+  (table) => [
+    index("idx_sources_note").on(table.noteId),
+    index("idx_sources_source").on(table.source),
+    index("idx_sources_hash").on(table.contentHash),
+  ]
+);

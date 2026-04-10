@@ -11,3 +11,4 @@ dist
 
 # instant-grep index
 .ig/
+.scratch/

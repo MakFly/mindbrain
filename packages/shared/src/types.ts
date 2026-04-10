@@ -57,3 +57,47 @@ export interface GraphResult {
   nodes: Note[];
   edges: Edge[];
 }
+
+export type SourceType = "claude-mem" | "mempalace" | "flat-files" | "cursor-rules";
+export type PlatformType = "claude-code" | "cursor" | "codex" | "gemini";
+export type SyncDirection = "import" | "export" | "bidirectional";
+
+export interface SourceMetadata {
+  id: string;
+  noteId: string;
+  source: SourceType;
+  sourceId: string;
+  importedAt: number;
+  contentHash: string;
+  syncDirection: SyncDirection;
+}
+
+export interface MiningConfig {
+  platform: PlatformType | "auto";
+  since?: string;
+  dryRun?: boolean;
+  llm?: boolean;
+}
+
+export interface MiningCandidate {
+  title: string;
+  content: string;
+  type: NoteType;
+  confidence: number;
+  sourceContext: string;
+  platform: PlatformType;
+}
+
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  errors: number;
+  details?: string[];
+}
+
+export interface AdapterScanResult {
+  source: SourceType;
+  available: boolean;
+  entryCount: number;
+  path?: string;
+}
