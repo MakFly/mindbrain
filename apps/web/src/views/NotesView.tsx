@@ -1,11 +1,27 @@
 import { useEffect, useState } from 'react';
 import { api, type Note } from '../lib/api';
 import ReactMarkdown from 'react-markdown';
+import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SearchIcon } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { SearchIcon, PlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
 
 type TypeColor = 'default' | 'secondary' | 'destructive' | 'outline';
 
@@ -28,6 +44,30 @@ const TYPE_COLORS_INLINE: Record<string, string> = {
 };
 
 const NOTE_TYPES = ['all', 'user', 'feedback', 'project', 'reference', 'codebase', 'debug'];
+const NOTE_TYPE_OPTIONS = ['user', 'feedback', 'project', 'reference', 'codebase', 'debug'];
+
+interface NoteFormData {
+  title: string;
+  type: string;
+  tags: string;
+  content: string;
+}
+
+const emptyForm = (): NoteFormData => ({
+  title: '',
+  type: 'user',
+  tags: '',
+  content: '',
+});
+
+function noteToForm(note: Note): NoteFormData {
+  return {
+    title: note.title,
+    type: note.type,
+    tags: note.tags.join(', '),
+    content: note.content,
+  };
+}
 
 export function NotesView() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -35,6 +75,22 @@ export function NotesView() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [selected, setSelected] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Create dialog
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<NoteFormData>(emptyForm());
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState('');
+
+  // Edit mode
+  const [editMode, setEditMode] = useState(false);
+  const [editForm, setEditForm] = useState<NoteFormData>(emptyForm());
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  // Delete dialog
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     void loadNotes();
@@ -71,6 +127,91 @@ export function NotesView() {
     setLoading(false);
   }
 
+  async function handleCreate() {
+    if (!createForm.title.trim()) {
+      setCreateError('Title is required.');
+      return;
+    }
+    setCreateLoading(true);
+    setCreateError('');
+    try {
+      const tags = createForm.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+      await api.createNote({
+        title: createForm.title.trim(),
+        content: createForm.content,
+        type: createForm.type,
+        tags,
+      });
+      setCreateOpen(false);
+      setCreateForm(emptyForm());
+      toast.success('Note created');
+      void loadNotes();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create note');
+    }
+    setCreateLoading(false);
+  }
+
+  function startEdit() {
+    if (!selected) return;
+    setEditForm(noteToForm(selected));
+    setEditError('');
+    setEditMode(true);
+  }
+
+  function cancelEdit() {
+    setEditMode(false);
+    setEditError('');
+  }
+
+  async function handleUpdate() {
+    if (!selected) return;
+    if (!editForm.title.trim()) {
+      setEditError('Title is required.');
+      return;
+    }
+    setEditLoading(true);
+    setEditError('');
+    try {
+      const tags = editForm.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const updated = await api.updateNote(selected.id, {
+        title: editForm.title.trim(),
+        content: editForm.content,
+        type: editForm.type,
+        tags,
+      });
+      setSelected(updated);
+      setEditMode(false);
+      toast.success('Note saved');
+      void loadNotes();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Failed to save note');
+    }
+    setEditLoading(false);
+  }
+
+  async function handleDelete() {
+    if (!selected) return;
+    setDeleteLoading(true);
+    try {
+      await api.deleteNote(selected.id);
+      setDeleteOpen(false);
+      setSelected(null);
+      setEditMode(false);
+      toast.success('Note deleted');
+      void loadNotes();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete note');
+    }
+    setDeleteLoading(false);
+  }
+
   return (
     <div className="flex h-full">
       {/* List panel */}
@@ -87,6 +228,17 @@ export function NotesView() {
             />
             <Button variant="outline" size="sm" onClick={() => void handleSearch()}>
               <SearchIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setCreateForm(emptyForm());
+                setCreateError('');
+                setCreateOpen(true);
+              }}
+              title="New Note"
+            >
+              <PlusIcon className="h-4 w-4" />
             </Button>
           </div>
           <div className="flex gap-1 flex-wrap">
@@ -112,7 +264,10 @@ export function NotesView() {
             notes.map((note) => (
               <button
                 key={note.id}
-                onClick={() => setSelected(note)}
+                onClick={() => {
+                  setSelected(note);
+                  setEditMode(false);
+                }}
                 className={`w-full text-left p-3 border-b hover:bg-accent/50 transition-colors ${
                   selected?.id === note.id ? 'bg-accent' : ''
                 }`}
@@ -150,45 +305,217 @@ export function NotesView() {
       {/* Detail panel */}
       <div className="flex-1 overflow-auto p-6">
         {selected ? (
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3 mb-1">
-                <Badge
-                  variant={TYPE_BADGE_VARIANT[selected.type] ?? 'outline'}
-                  className={TYPE_COLORS_INLINE[selected.type]}
-                >
-                  {selected.type}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(selected.updatedAt).toLocaleString()}
-                </span>
-              </div>
-              <CardTitle className="text-xl">{selected.title}</CardTitle>
-              {selected.tags.length > 0 && (
-                <div className="flex gap-2 flex-wrap pt-1">
-                  {selected.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      #{tag}
-                    </Badge>
-                  ))}
+          editMode ? (
+            /* Edit mode */
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between mb-2">
+                  <CardTitle className="text-lg">Edit Note</CardTitle>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={cancelEdit} disabled={editLoading}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={() => void handleUpdate()} disabled={editLoading}>
+                      {editLoading ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
                 </div>
-              )}
-              <p className="text-xs text-muted-foreground pt-1">
-                Created {new Date(selected.createdAt).toLocaleString()} | ID: {selected.id.slice(0, 8)}
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <ReactMarkdown>{selected.content}</ReactMarkdown>
-              </div>
-            </CardContent>
-          </Card>
+                {editError && (
+                  <p className="text-sm text-destructive">{editError}</p>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="edit-title">Title</Label>
+                  <Input
+                    id="edit-title"
+                    value={editForm.title}
+                    onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="edit-type">Type</Label>
+                  <Select
+                    value={editForm.type}
+                    onValueChange={(v) => setEditForm((f) => ({ ...f, type: v }))}
+                  >
+                    <SelectTrigger id="edit-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NOTE_TYPE_OPTIONS.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="edit-tags">Tags (comma-separated)</Label>
+                  <Input
+                    id="edit-tags"
+                    value={editForm.tags}
+                    onChange={(e) => setEditForm((f) => ({ ...f, tags: e.target.value }))}
+                    placeholder="tag1, tag2, tag3"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="edit-content">Content</Label>
+                  <textarea
+                    id="edit-content"
+                    value={editForm.content}
+                    onChange={(e) => setEditForm((f) => ({ ...f, content: e.target.value }))}
+                    rows={12}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y font-mono"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            /* View mode */
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3 mb-1">
+                  <Badge
+                    variant={TYPE_BADGE_VARIANT[selected.type] ?? 'outline'}
+                    className={TYPE_COLORS_INLINE[selected.type]}
+                  >
+                    {selected.type}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(selected.updatedAt).toLocaleString()}
+                  </span>
+                  <div className="ml-auto flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={startEdit} title="Edit">
+                      <PencilIcon className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => setDeleteOpen(true)}
+                      title="Delete"
+                    >
+                      <TrashIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+                <CardTitle className="text-xl">{selected.title}</CardTitle>
+                {selected.tags.length > 0 && (
+                  <div className="flex gap-2 flex-wrap pt-1">
+                    {selected.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground pt-1">
+                  Created {new Date(selected.createdAt).toLocaleString()} | ID: {selected.id.slice(0, 8)}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown>{selected.content}</ReactMarkdown>
+                </div>
+              </CardContent>
+            </Card>
+          )
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             Select a note to view
           </div>
         )}
       </div>
+
+      {/* Create dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New Note</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {createError && (
+              <p className="text-sm text-destructive">{createError}</p>
+            )}
+            <div className="space-y-1">
+              <Label htmlFor="create-title">Title *</Label>
+              <Input
+                id="create-title"
+                value={createForm.title}
+                onChange={(e) => setCreateForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder="Note title"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="create-type">Type</Label>
+              <Select
+                value={createForm.type}
+                onValueChange={(v) => setCreateForm((f) => ({ ...f, type: v }))}
+              >
+                <SelectTrigger id="create-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NOTE_TYPE_OPTIONS.map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="create-tags">Tags (comma-separated)</Label>
+              <Input
+                id="create-tags"
+                value={createForm.tags}
+                onChange={(e) => setCreateForm((f) => ({ ...f, tags: e.target.value }))}
+                placeholder="tag1, tag2, tag3"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="create-content">Content</Label>
+              <textarea
+                id="create-content"
+                value={createForm.content}
+                onChange={(e) => setCreateForm((f) => ({ ...f, content: e.target.value }))}
+                rows={8}
+                placeholder="Note content (Markdown supported)"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-y font-mono"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={createLoading}>
+              Cancel
+            </Button>
+            <Button onClick={() => void handleCreate()} disabled={createLoading}>
+              {createLoading ? 'Creating...' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Note</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">
+            Are you sure you want to delete{' '}
+            <span className="font-medium text-foreground">"{selected?.title}"</span>?
+            This action cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleteLoading}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => void handleDelete()} disabled={deleteLoading}>
+              {deleteLoading ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

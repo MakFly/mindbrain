@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { api, type Note, type GraphResult } from '../lib/api';
+import { toast } from 'sonner';
 import { GraphCanvas, type GraphNode, type GraphEdge, type Theme, darkTheme } from 'reagraph';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { XIcon } from 'lucide-react';
+import { XIcon, RefreshCwIcon } from 'lucide-react';
 
 const TYPE_COLORS: Record<string, string> = {
   user: '#4ade80',
@@ -55,6 +56,7 @@ export function GraphView() {
   const [loading, setLoading] = useState(true);
   const [depth, setDepth] = useState(3);
   const [maxEdges, setMaxEdges] = useState(300);
+  const [autoLinkLoading, setAutoLinkLoading] = useState(false);
   const notesRef = useRef<Note[]>([]);
 
   useEffect(() => {
@@ -115,6 +117,18 @@ export function GraphView() {
     setSelected(note ?? null);
   }, []);
 
+  async function handleAutoLink() {
+    setAutoLinkLoading(true);
+    try {
+      const result = await api.autoLink();
+      toast.success(`Auto-link complete: ${result.created} created, ${result.skipped} skipped`);
+      loadGraph();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Auto-link failed');
+    }
+    setAutoLinkLoading(false);
+  }
+
   return (
     <div className="flex h-full">
       <div className="flex-1 flex flex-col">
@@ -149,6 +163,17 @@ export function GraphView() {
               </SelectContent>
             </Select>
           </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void handleAutoLink()}
+            disabled={autoLinkLoading}
+            className="flex items-center gap-1.5"
+          >
+            <RefreshCwIcon className={`h-3.5 w-3.5 ${autoLinkLoading ? 'animate-spin' : ''}`} />
+            {autoLinkLoading ? 'Linking...' : 'Auto-link'}
+          </Button>
 
           <div className="flex gap-2 ml-auto flex-wrap">
             {Object.entries(TYPE_COLORS).map(([type, color]) => (

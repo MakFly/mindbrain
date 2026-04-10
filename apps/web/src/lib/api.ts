@@ -64,10 +64,11 @@ export const api = {
 
   getNote: (id: string) => request<Note>('GET', `/notes/${id}`),
 
-  searchNotes: (q: string, type?: string) => {
+  searchNotes: async (q: string, type?: string) => {
     const qs = new URLSearchParams({ q });
     if (type) qs.set('type', type);
-    return request<Note[]>('GET', `/search?${qs}`);
+    const data = await request<{ results: Note[]; count: number }>('GET', `/search?${qs}`);
+    return data.results;
   },
 
   // Graph
@@ -90,5 +91,23 @@ export const api = {
 
   // Mine
   mine: (data: { platform?: string; since?: string; dryRun?: boolean }) =>
-    request<unknown>('POST', '/mining', data),
+    request<{ saved: number; skipped: number; candidates: number }>('POST', '/mining', data),
+
+  // Write operations
+  createNote: (data: { title: string; content: string; type: string; tags: string[] }) =>
+    request<Note>('POST', '/notes', data),
+
+  updateNote: (id: string, data: Partial<{ title: string; content: string; type: string; tags: string[] }>) =>
+    request<Note>('PUT', `/notes/${id}`, data),
+
+  deleteNote: (id: string) =>
+    request<void>('DELETE', `/notes/${id}`),
+
+  // Graph actions
+  autoLink: () =>
+    request<{ created: number; skipped: number }>('POST', '/graph/auto-link'),
+
+  // Project stats
+  getStats: () =>
+    request<{ notes: number; edges: number; sources: number }>('GET', '/projects/stats'),
 };

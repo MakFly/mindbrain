@@ -1,8 +1,9 @@
 import { Hono } from "hono";
+import type { AppEnv } from "../types";
 import { createProjectSchema } from "@mindbrain/shared";
 import { createProject, getProjectStats } from "../services/projects";
 
-const app = new Hono();
+const app = new Hono<AppEnv>();
 
 // POST / — create project (no auth)
 app.post("/", async (c) => {
@@ -19,9 +20,9 @@ app.post("/", async (c) => {
   return c.json({ project, apiKey }, 201);
 });
 
-// GET /:id/stats — project statistics
-app.get("/:id/stats", async (c) => {
-  const projectId = c.get("projectId" as never) as string;
+// GET /stats — project statistics (uses authenticated project)
+app.get("/stats", async (c) => {
+  const projectId = c.get("projectId");
   const stats = await getProjectStats(projectId);
   return c.json(stats);
 });

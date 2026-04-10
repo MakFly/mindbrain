@@ -5,6 +5,7 @@ import { SourcesView } from './views/SourcesView';
 import { SettingsDialog } from './components/SettingsDialog';
 import { AppSidebar } from './components/app-sidebar';
 import { SidebarProvider } from './components/ui/sidebar';
+import { Toaster } from './components/ui/sonner';
 import { useState } from 'react';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
       </SidebarProvider>
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <Toaster />
     </BrowserRouter>
   );
 }
