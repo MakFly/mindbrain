@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { createContext, useContext } from 'react';
 import { NotesView } from './views/NotesView';
 import { GraphView } from './views/GraphView';
 import { SourcesView } from './views/SourcesView';
@@ -7,27 +8,45 @@ import { AppSidebar } from './components/app-sidebar';
 import { SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { useState } from 'react';
+import { useSSE, type SSEHandle } from './hooks/use-sse';
 
-function App() {
+export const SSEContext = createContext<SSEHandle>({
+  connected: false,
+  on: () => undefined,
+  off: () => undefined,
+});
+
+export function useSSEContext(): SSEHandle {
+  return useContext(SSEContext);
+}
+
+function AppInner() {
   const [settingsOpen, setSettingsOpen] = useState(!localStorage.getItem('mindbrain-api-key'));
+  const sse = useSSE();
 
   return (
-    <BrowserRouter>
-      <SidebarProvider>
-        <AppSidebar onSettingsOpen={() => setSettingsOpen(true)} />
-        <main className="flex-1 overflow-auto">
-          <Routes>
-            <Route path="/" element={<NotesView />} />
-            <Route path="/graph" element={<GraphView />} />
-            <Route path="/sources" element={<SourcesView />} />
-          </Routes>
-        </main>
-      </SidebarProvider>
+    <SSEContext.Provider value={sse}>
+      <BrowserRouter>
+        <SidebarProvider>
+          <AppSidebar onSettingsOpen={() => setSettingsOpen(true)} connected={sse.connected} />
+          <main className="flex-1 overflow-auto">
+            <Routes>
+              <Route path="/" element={<NotesView />} />
+              <Route path="/graph" element={<GraphView />} />
+              <Route path="/sources" element={<SourcesView />} />
+            </Routes>
+          </main>
+        </SidebarProvider>
 
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <Toaster />
-    </BrowserRouter>
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        <Toaster />
+      </BrowserRouter>
+    </SSEContext.Provider>
   );
+}
+
+function App() {
+  return <AppInner />;
 }
 
 export default App;

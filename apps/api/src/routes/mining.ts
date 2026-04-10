@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { mineSchema } from "@mindbrain/shared";
 import { mine } from "../services/mining";
+import { events } from "../services/events";
 import { createNote } from "../services/notes";
 import { db, sqlite } from "../db";
 import { sourcesMetadata } from "../db/schema";
@@ -79,12 +80,16 @@ app.post("/", async (c) => {
     saved++;
   }
 
-  return c.json({
+  const response = {
     saved,
     skipped,
     conversationsParsed: result.conversationsParsed,
     platformsScanned: result.platformsScanned,
-  });
+  };
+  if (saved > 0) {
+    events.publish("mining:completed", projectId, response);
+  }
+  return c.json(response);
 });
 
 export default app;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api, type Note } from '../lib/api';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { SearchIcon, PlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
+import { useSSEContext } from '../App';
 
 type TypeColor = 'default' | 'secondary' | 'destructive' | 'outline';
 
@@ -70,6 +71,7 @@ function noteToForm(note: Note): NoteFormData {
 }
 
 export function NotesView() {
+  const sse = useSSEContext();
   const [notes, setNotes] = useState<Note[]>([]);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -95,6 +97,33 @@ export function NotesView() {
   useEffect(() => {
     void loadNotes();
   }, [typeFilter]);
+
+  const handleNoteCreated = useCallback((data: unknown) => {
+    const note = data as { title?: string };
+    toast.info(`Note added${note?.title ? `: ${note.title}` : ''}`);
+    void loadNotes();
+  }, []);
+
+  const handleNoteUpdated = useCallback(() => {
+    toast.info('Note updated');
+    void loadNotes();
+  }, []);
+
+  const handleNoteDeleted = useCallback(() => {
+    toast.info('Note deleted');
+    void loadNotes();
+  }, []);
+
+  useEffect(() => {
+    sse.on('note:created', handleNoteCreated);
+    sse.on('note:updated', handleNoteUpdated);
+    sse.on('note:deleted', handleNoteDeleted);
+    return () => {
+      sse.off('note:created', handleNoteCreated);
+      sse.off('note:updated', handleNoteUpdated);
+      sse.off('note:deleted', handleNoteDeleted);
+    };
+  }, [sse, handleNoteCreated, handleNoteUpdated, handleNoteDeleted]);
 
   async function loadNotes() {
     setLoading(true);

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { importSchema } from "@mindbrain/shared";
 import { getAdapter, detectAll } from "../services/adapters";
+import { events } from "../services/events";
 import { createNote } from "../services/notes";
 import { db, sqlite } from "../db";
 import { sourcesMetadata } from "../db/schema";
@@ -84,7 +85,11 @@ app.post("/", async (c) => {
     }
   }
 
-  return c.json({ imported, skipped, errors, details });
+  const result = { imported, skipped, errors, details };
+  if (imported > 0) {
+    events.publish("import:completed", projectId, result);
+  }
+  return c.json(result);
 });
 
 export default app;

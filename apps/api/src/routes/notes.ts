@@ -4,6 +4,7 @@ import {
   updateNoteSchema,
 } from "@mindbrain/shared";
 import type { AppEnv } from "../types";
+import { events } from "../services/events";
 import {
   createNote,
   getNote,
@@ -25,6 +26,7 @@ app.post("/", async (c) => {
 
   const projectId = c.get("projectId");
   const note = await createNote(projectId, parsed.data);
+  events.publish("note:created", projectId, note);
   return c.json(note, 201);
 });
 
@@ -63,6 +65,8 @@ app.put("/:id", async (c) => {
 
   const note = await updateNote(resolvedId, parsed.data);
   if (!note) return c.json({ error: "Note not found or ambiguous short ID" }, 404);
+  const projectId = c.get("projectId");
+  events.publish("note:updated", projectId, note);
   return c.json(note);
 });
 
@@ -71,6 +75,8 @@ app.delete("/:id", async (c) => {
   const resolvedId = resolveNoteId(c.req.param("id"));
   if (!resolvedId) return c.json({ error: "Note not found or ambiguous short ID" }, 404);
   await deleteNote(resolvedId);
+  const projectId = c.get("projectId");
+  events.publish("note:deleted", projectId, { id: resolvedId });
   return c.body(null, 204);
 });
 

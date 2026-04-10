@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useSSEContext } from '../App';
 import { api, type Note, type GraphResult } from '../lib/api';
 import { toast } from 'sonner';
 import { GraphCanvas, type GraphNode, type GraphEdge, type Theme, darkTheme } from 'reagraph';
@@ -50,6 +51,7 @@ const graphTheme: Theme = {
 };
 
 export function GraphView() {
+  const sse = useSSEContext();
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [selected, setSelected] = useState<Note | null>(null);
@@ -116,6 +118,21 @@ export function GraphView() {
     const note = notesRef.current.find((n) => n.id === node.id);
     setSelected(note ?? null);
   }, []);
+
+  const handleGraphRefresh = useCallback(() => {
+    loadGraph();
+  }, []);
+
+  useEffect(() => {
+    sse.on('edge:created', handleGraphRefresh);
+    sse.on('note:created', handleGraphRefresh);
+    sse.on('note:deleted', handleGraphRefresh);
+    return () => {
+      sse.off('edge:created', handleGraphRefresh);
+      sse.off('note:created', handleGraphRefresh);
+      sse.off('note:deleted', handleGraphRefresh);
+    };
+  }, [sse, handleGraphRefresh]);
 
   async function handleAutoLink() {
     setAutoLinkLoading(true);

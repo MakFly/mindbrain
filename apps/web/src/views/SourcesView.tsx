@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { api, type SourceStat } from '../lib/api';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { UploadIcon, PickaxeIcon } from 'lucide-react';
+import { useSSEContext } from '../App';
 
 const SOURCE_INFO: Record<string, { label: string; description: string }> = {
   'claude-mem': {
@@ -50,6 +51,7 @@ interface MineResult {
 }
 
 export function SourcesView() {
+  const sse = useSSEContext();
   const [sources, setSources] = useState<SourceStat[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,6 +73,35 @@ export function SourcesView() {
   useEffect(() => {
     void loadSources();
   }, []);
+
+  const handleImportCompleted = useCallback((data: unknown) => {
+    const result = data as { imported?: number; skipped?: number } | null;
+    if (result && typeof result.imported === 'number') {
+      toast.success(`Import: ${result.imported} imported, ${result.skipped ?? 0} skipped`);
+    } else {
+      toast.success('Import completed');
+    }
+    void loadSources();
+  }, []);
+
+  const handleMiningCompleted = useCallback((data: unknown) => {
+    const result = data as { saved?: number; skipped?: number; candidates?: number } | null;
+    if (result && typeof result.saved === 'number') {
+      toast.success(`Mining: ${result.saved} saved, ${result.skipped ?? 0} skipped`);
+    } else {
+      toast.success('Mining completed');
+    }
+    void loadSources();
+  }, []);
+
+  useEffect(() => {
+    sse.on('import:completed', handleImportCompleted);
+    sse.on('mining:completed', handleMiningCompleted);
+    return () => {
+      sse.off('import:completed', handleImportCompleted);
+      sse.off('mining:completed', handleMiningCompleted);
+    };
+  }, [sse, handleImportCompleted, handleMiningCompleted]);
 
   async function loadSources() {
     setLoading(true);

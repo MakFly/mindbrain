@@ -13,6 +13,7 @@ import graphRoutes from "./routes/graph";
 import sourcesRoutes from "./routes/sources";
 import miningRoutes from "./routes/mining";
 import importRoutes from "./routes/import";
+import eventsRoutes from "./routes/events";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -58,6 +59,7 @@ app.route("/graph", graphRoutes);
 app.route("/sources", sourcesRoutes);
 app.route("/mining", miningRoutes);
 app.route("/import", importRoutes);
+app.route("/events", eventsRoutes);
 
 // Global error handler
 app.onError((err, c) => {

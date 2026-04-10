@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { createLinkSchema } from "@mindbrain/shared";
 import type { AppEnv } from "../types";
+import { events } from "../services/events";
 import {
   getSubGraph,
   getFullGraph,
@@ -48,6 +49,8 @@ app.post("/notes/:id/link", async (c) => {
 
   const { targetId, type } = parsed.data;
   const edge = await createLink(sourceId, targetId, type);
+  const projectId = c.get("projectId");
+  events.publish("edge:created", projectId, edge);
 
   return c.json({ edge }, 201);
 });
