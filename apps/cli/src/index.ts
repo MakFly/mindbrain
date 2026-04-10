@@ -13,6 +13,8 @@ import { importCommand } from "./commands/import";
 import { exportCommand } from "./commands/export";
 import { installCommand } from "./commands/install";
 import { uninstallCommand } from "./commands/uninstall";
+import { mineCommand } from "./commands/mine";
+import { dashboardCommand } from "./commands/dashboard";
 
 const program = new Command();
 
@@ -34,5 +36,7 @@ program.addCommand(importCommand);
 program.addCommand(exportCommand);
 program.addCommand(installCommand);
 program.addCommand(uninstallCommand);
+program.addCommand(mineCommand);
+program.addCommand(dashboardCommand);
 
 program.parse();

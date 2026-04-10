@@ -28,7 +28,13 @@ function toFrontmatter(note: { title: string; type: string; tags?: string[] }): 
 export const exportCommand = new Command("export")
   .description("Export all notes as markdown files")
   .argument("[dir]", "Output directory", "./mindbrain-export/")
-  .action(async (dir: string) => {
+  .option("--to <source>", "Export format (flat-files, more coming in wave 2)")
+  .action(async (dir: string, opts: { to?: string }) => {
+    if (opts.to && opts.to !== "flat-files") {
+      console.log(`${DIM}Export to ${opts.to} is not yet supported (coming in wave 2).${RESET}`);
+      console.log(`${DIM}Supported: flat-files (default)${RESET}`);
+      return;
+    }
     const config = await loadConfig();
     if (!config) {
       process.stderr.write("Error: Not initialized. Run `mb init` first.\n");

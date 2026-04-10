@@ -89,13 +89,74 @@ export const uninstallCommand = new Command("uninstall")
   .description("Remove Mindbrain integration from Claude Code")
   .option("-y, --yes", "Skip all confirmations")
   .option("--purge", "Also remove all .mindbrain.json files from projects and API data")
-  .action(async (opts: { yes?: boolean; purge?: boolean }) => {
+  .option("--platform <platform>", "Target platform to uninstall (claude-code|cursor|codex|gemini|all)")
+  .action(async (opts: { yes?: boolean; purge?: boolean; platform?: string }) => {
     const home = homedir();
     const claudeHooksDir = join(home, ".claude/hooks");
     const settingsPath = join(home, ".claude/settings.json");
     const localBin = join(home, ".local/bin");
 
     console.log(`${BOLD}Mindbrain — Uninstall${RESET}\n`);
+
+    // ── Platform-specific uninstall (non claude-code) ──
+    if (opts.platform && opts.platform !== "claude-code") {
+      const platforms = opts.platform === "all"
+        ? ["cursor", "codex", "gemini"]
+        : [opts.platform];
+
+      for (const platform of platforms) {
+        switch (platform) {
+          case "cursor": {
+            const rulesPath = join(process.cwd(), ".cursor/rules/mindbrain.mdc");
+            try {
+              const f = Bun.file(rulesPath);
+              if (await f.exists()) {
+                await unlink(rulesPath);
+                console.log(`${GREEN}✓${RESET} Removed Cursor rules`);
+              } else {
+                console.log(`${DIM}─${RESET} Cursor rules not found ${DIM}(skipped)${RESET}`);
+              }
+            } catch {}
+            break;
+          }
+          case "codex": {
+            const agentsPath = join(process.cwd(), "AGENTS.md");
+            try {
+              const f = Bun.file(agentsPath);
+              if (await f.exists()) {
+                const content = await f.text();
+                if (content.includes(MARKER_BEGIN)) {
+                  const cleaned = removeMindbrainBlock(content);
+                  await Bun.write(agentsPath, cleaned);
+                  console.log(`${GREEN}✓${RESET} Removed Mindbrain section from AGENTS.md`);
+                } else {
+                  console.log(`${DIM}─${RESET} No Mindbrain section in AGENTS.md ${DIM}(skipped)${RESET}`);
+                }
+              }
+            } catch {}
+            break;
+          }
+          case "gemini": {
+            const geminiPath = join(process.cwd(), ".gemini/mindbrain-context.md");
+            try {
+              const f = Bun.file(geminiPath);
+              if (await f.exists()) {
+                await unlink(geminiPath);
+                console.log(`${GREEN}✓${RESET} Removed Gemini context`);
+              } else {
+                console.log(`${DIM}─${RESET} Gemini context not found ${DIM}(skipped)${RESET}`);
+              }
+            } catch {}
+            break;
+          }
+        }
+      }
+
+      if (opts.platform !== "all") {
+        console.log(`\n${GREEN}${BOLD}Uninstalled from ${opts.platform}.${RESET}`);
+        return;
+      }
+    }
 
     // ── 1. Remove Mindbrain blocks from hooks ──
     const hookFiles = [

@@ -5,6 +5,8 @@ import { Glob } from "bun";
 
 const BOLD = "\x1b[1m";
 const DIM = "\x1b[2m";
+const GREEN = "\x1b[32m";
+const YELLOW = "\x1b[33m";
 const RESET = "\x1b[0m";
 
 const TYPE_MAP: Record<string, string> = {
@@ -50,9 +52,11 @@ function extractTags(description?: string): string[] {
 }
 
 export const importCommand = new Command("import")
-  .description("Import memories from a Claude Code memory directory")
-  .argument("[dir]", "Directory to import from", ".claude/memory/")
-  .action(async (dir: string) => {
+  .description("Import memories from external sources or markdown files")
+  .argument("[dir]", "Directory to import from (legacy mode)", ".claude/memory/")
+  .option("--from <source>", "Import source (claude-mem|mempalace|flat-files|cursor-rules|auto)")
+  .option("--dry-run", "Preview what would be imported", false)
+  .action(async (dir: string, opts: { from?: string; dryRun?: boolean }) => {
     const config = await loadConfig();
     if (!config) {
       process.stderr.write("Error: Not initialized. Run `mb init` first.\n");
@@ -61,6 +65,28 @@ export const importCommand = new Command("import")
 
     try {
       const client = new MindbrainClient(config.apiUrl, config.apiKey);
+
+      if (opts.from) {
+        // New adapter-based import
+        console.log(`${BOLD}Importing from ${opts.from}...${RESET}`);
+        if (opts.dryRun) console.log(`${DIM}(dry run)${RESET}`);
+        console.log();
+
+        const result = await client.importFrom(opts.from, dir, opts.dryRun || false);
+
+        console.log(`${GREEN}✓${RESET} Imported: ${BOLD}${result.imported}${RESET}`);
+        if (result.skipped > 0) console.log(`${DIM}  Skipped: ${result.skipped} (duplicates)${RESET}`);
+        if (result.errors > 0) console.log(`${YELLOW}  Errors: ${result.errors}${RESET}`);
+        if (result.details && result.details.length > 0) {
+          console.log();
+          for (const d of result.details) {
+            console.log(`  ${DIM}${d}${RESET}`);
+          }
+        }
+        return;
+      }
+
+      // Legacy mode: direct .md file import (existing behavior)
       const glob = new Glob("**/*.md");
       let count = 0;
 

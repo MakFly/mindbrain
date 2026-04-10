@@ -113,4 +113,28 @@ export class MindbrainClient {
     qs.set("limit", String(limit));
     return this.request<any>("GET", `/notes?${qs}`);
   }
+
+  async importFrom(source: string, path: string, dryRun = false) {
+    return this.request<{
+      imported: number;
+      skipped: number;
+      errors: number;
+      details?: string[];
+    }>("POST", "/import", { source, path, dryRun });
+  }
+
+  async mine(opts: {
+    platform?: string;
+    since?: string;
+    dryRun?: boolean;
+    llm?: boolean;
+  }) {
+    return this.request<any>("POST", "/mining", opts);
+  }
+
+  async getSources() {
+    return this.request<
+      { source: string; count: number; last_import: number }[]
+    >("GET", "/sources");
+  }
 }
