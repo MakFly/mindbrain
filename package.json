@@ -6,6 +6,7 @@
     "dev:api": "bun run --cwd apps/api dev",
     "dev:cli": "bun run --cwd apps/cli dev",
     "db:generate": "bun run --cwd apps/api db:generate",
-    "db:push": "bun run --cwd apps/api db:push"
+    "db:push": "bun run --cwd apps/api db:push",
+    "test": "bun test"
   }
 }

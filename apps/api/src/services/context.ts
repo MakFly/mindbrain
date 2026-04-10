@@ -34,7 +34,7 @@ interface ScoredNote {
  * - Quoted phrases (e.g. "fix login") are kept as exact FTS5 phrases.
  * - Unquoted words are individually quoted and OR-joined.
  */
-function buildContextFtsQuery(raw: string): string {
+export function buildContextFtsQuery(raw: string): string {
   const phrases: string[] = [];
   // Extract quoted phrases first
   const withoutPhrases = raw.replace(/"([^"]+)"/g, (_, phrase) => {

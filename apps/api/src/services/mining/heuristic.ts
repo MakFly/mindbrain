@@ -110,7 +110,7 @@ export const heuristicExtractor: Extractor = {
   },
 };
 
-function generateTitle(patternName: string, matchingLine: string): string {
+export function generateTitle(patternName: string, matchingLine: string): string {
   const cleaned = matchingLine.trim().slice(0, 100);
 
   const prefixes: Record<string, string> = {
