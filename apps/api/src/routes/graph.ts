@@ -161,8 +161,9 @@ app.post("/auto-link", async (c) => {
           createdAt: now,
         });
       }
-    } catch {
-      // FTS query might fail on some titles, skip
+    } catch (e) {
+      const { logger } = await import("../logger");
+      logger.error(e, "FTS auto-link query failed for note");
     }
   }
 

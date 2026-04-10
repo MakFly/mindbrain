@@ -3,6 +3,9 @@ import { cors } from "hono/cors";
 import { serveStatic } from "hono/bun";
 import { ensureTables, setupFTS } from "./db";
 import { authMiddleware } from "./middleware/auth";
+import { requestLogger } from "./middleware/logger";
+import { rateLimiter } from "./middleware/rate-limit";
+import { logger } from "./logger";
 import projectsRoutes from "./routes/projects";
 import notesRoutes from "./routes/notes";
 import searchRoutes from "./routes/search";
@@ -15,11 +18,25 @@ import { join } from "path";
 
 const app = new Hono();
 
-// CORS for dashboard
-app.use("/*", cors({
-  origin: ["http://localhost:5173", "http://localhost:3456"],
-  allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-}));
+// Configurable CORS — read allowed origins from CORS_ORIGINS env var (comma-separated)
+// Default: http://localhost:5173,http://localhost:3456
+// Set CORS_ORIGINS=* to allow all origins
+const corsOrigins = process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:3456";
+const originList = corsOrigins === "*" ? "*" : corsOrigins.split(",").map((o) => o.trim());
+
+app.use(
+  "/*",
+  cors({
+    origin: originList,
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  })
+);
+
+// Request logger — first middleware after CORS
+app.use("/*", requestLogger);
+
+// Rate limiter — after logger, before auth
+app.use("/*", rateLimiter);
 
 // Health check — no auth
 app.get("/health", (c) => c.json({ status: "ok" }));
@@ -41,6 +58,12 @@ app.route("/graph", graphRoutes);
 app.route("/sources", sourcesRoutes);
 app.route("/mining", miningRoutes);
 app.route("/import", importRoutes);
+
+// Global error handler
+app.onError((err, c) => {
+  logger.error({ err, path: c.req.path }, "Unhandled error");
+  return c.json({ error: "Internal server error" }, 500);
+});
 
 // Serve web frontend static assets in production (SPA with fallback)
 if (process.env.NODE_ENV === "production") {
