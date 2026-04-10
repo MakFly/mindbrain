@@ -1,0 +1,12 @@
+services:
+  mindbrain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3456:3456"
+    volumes:
+      - ./data:/app/data
+    environment:
+      DB_PATH: /app/data/mindbrain.db
+    restart: unless-stopped

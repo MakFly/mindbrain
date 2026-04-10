@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { serveStatic } from "hono/bun";
 import { ensureTables, setupFTS } from "./db";
 import { authMiddleware } from "./middleware/auth";
 import projectsRoutes from "./routes/projects";
@@ -9,6 +10,8 @@ import graphRoutes from "./routes/graph";
 import sourcesRoutes from "./routes/sources";
 import miningRoutes from "./routes/mining";
 import importRoutes from "./routes/import";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 const app = new Hono();
 
@@ -38,6 +41,20 @@ app.route("/graph", graphRoutes);
 app.route("/sources", sourcesRoutes);
 app.route("/mining", miningRoutes);
 app.route("/import", importRoutes);
+
+// Serve web frontend static assets in production (SPA with fallback)
+if (process.env.NODE_ENV === "production") {
+  const webDistPath = join(import.meta.dir, "../../../apps/web/dist");
+
+  // Serve static files
+  app.use("/*", serveStatic({ root: webDistPath }));
+
+  // SPA fallback: serve index.html for any non-matched route
+  app.get("/*", (c) => {
+    const indexHtml = readFileSync(join(webDistPath, "index.html"), "utf-8");
+    return c.html(indexHtml);
+  });
+}
 
 // Initialize DB and start server
 ensureTables();
