@@ -1,7 +1,8 @@
 import { createMiddleware } from "hono/factory";
 import { getProjectByKeyHash, hashApiKey } from "../services/projects";
+import type { AppEnv } from "../types";
 
-export const authMiddleware = createMiddleware(async (c, next) => {
+export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   const apiKey = c.req.header("X-API-Key");
 
   if (!apiKey) {

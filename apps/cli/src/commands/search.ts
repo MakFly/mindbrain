@@ -2,9 +2,7 @@ import { Command } from "commander";
 import { MindbrainClient } from "../client";
 import { loadConfig } from "../config";
 
-const BOLD = "\x1b[1m";
-const DIM = "\x1b[2m";
-const RESET = "\x1b[0m";
+import { BOLD, DIM, RESET } from "../utils/ansi";
 
 function truncate(s: string, len: number): string {
   const clean = s.replace(/\n/g, " ");

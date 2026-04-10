@@ -1,3 +1,40 @@
+import type { Note, Edge, GraphResult, Project, ImportResult } from "@mindbrain/shared";
+
+interface CreateProjectResult {
+  project: Project;
+  apiKey: string;
+}
+
+interface SearchResult {
+  results: Note[];
+  count: number;
+}
+
+interface ContextResult {
+  notes: Note[];
+  markdown: string;
+  count: number;
+}
+
+interface BacklinksResult {
+  backlinks: Edge[];
+  count: number;
+}
+
+interface MineResult {
+  saved?: number;
+  skipped?: number;
+  conversationsParsed: number;
+  platformsScanned: number;
+  candidates?: {
+    title: string;
+    type: string;
+    confidence: number;
+    sourceContext: string;
+    preview: string;
+  }[];
+}
+
 export class MindbrainClient {
   constructor(
     private apiUrl: string,
@@ -34,7 +71,7 @@ export class MindbrainClient {
   }
 
   async createProject(name: string, path?: string) {
-    return this.request<{ project: any; apiKey: string }>(
+    return this.request<CreateProjectResult>(
       "POST",
       "/projects",
       { name, path },
@@ -49,11 +86,11 @@ export class MindbrainClient {
     tags?: string[];
     metadata?: Record<string, unknown>;
   }) {
-    return this.request<any>("POST", "/notes", data);
+    return this.request<Note>("POST", "/notes", data);
   }
 
   async getNote(id: string) {
-    return this.request<any>("GET", `/notes/${id}`);
+    return this.request<Note>("GET", `/notes/${id}`);
   }
 
   async deleteNote(id: string) {
@@ -73,7 +110,7 @@ export class MindbrainClient {
     if (params.type) qs.set("type", params.type);
     if (params.limit) qs.set("limit", String(params.limit));
     if (params.offset) qs.set("offset", String(params.offset));
-    return this.request<any>("GET", `/search?${qs}`);
+    return this.request<SearchResult>("GET", `/search?${qs}`);
   }
 
   async context(data: {
@@ -83,44 +120,39 @@ export class MindbrainClient {
     type?: string;
     limit?: number;
   }) {
-    return this.request<any>("POST", "/search/context", data);
+    return this.request<ContextResult>("POST", "/search/context", data);
   }
 
   async graph(params: { noteId?: string; depth?: number }) {
     const qs = new URLSearchParams();
     if (params.noteId) qs.set("noteId", params.noteId);
     if (params.depth) qs.set("depth", String(params.depth));
-    return this.request<any>("GET", `/graph?${qs}`);
+    return this.request<GraphResult>("GET", `/graph?${qs}`);
   }
 
   async backlinks(id: string) {
-    return this.request<any>("GET", `/graph/notes/${id}/backlinks`);
+    return this.request<BacklinksResult>("GET", `/graph/notes/${id}/backlinks`);
   }
 
   async link(sourceId: string, targetId: string, type: string) {
-    return this.request<any>("POST", `/graph/notes/${sourceId}/link`, {
+    return this.request<{ edge: Edge }>("POST", `/graph/notes/${sourceId}/link`, {
       targetId,
       type,
     });
   }
 
   async updateNote(id: string, data: { title?: string; content?: string; type?: string; tags?: string[] }) {
-    return this.request<any>("PUT", `/notes/${id}`, data);
+    return this.request<Note>("PUT", `/notes/${id}`, data);
   }
 
   async listAllNotes(limit = 1000) {
     const qs = new URLSearchParams();
     qs.set("limit", String(limit));
-    return this.request<any>("GET", `/notes?${qs}`);
+    return this.request<Note[]>("GET", `/notes?${qs}`);
   }
 
   async importFrom(source: string, path: string, dryRun = false) {
-    return this.request<{
-      imported: number;
-      skipped: number;
-      errors: number;
-      details?: string[];
-    }>("POST", "/import", { source, path, dryRun });
+    return this.request<ImportResult>("POST", "/import", { source, path, dryRun });
   }
 
   async mine(opts: {
@@ -129,7 +161,7 @@ export class MindbrainClient {
     dryRun?: boolean;
     llm?: boolean;
   }) {
-    return this.request<any>("POST", "/mining", opts);
+    return this.request<MineResult>("POST", "/mining", opts);
   }
 
   async getSources() {

@@ -4,13 +4,10 @@ import { mine } from "../services/mining";
 import { createNote } from "../services/notes";
 import { db, sqlite } from "../db";
 import { sourcesMetadata } from "../db/schema";
-import { createHash } from "crypto";
+import { hashContent } from "../utils/hash";
+import type { AppEnv } from "../types";
 
-const app = new Hono();
-
-function hashContent(content: string): string {
-  return createHash("sha256").update(content.trim().toLowerCase()).digest("hex");
-}
+const app = new Hono<AppEnv>();
 
 app.post("/", async (c) => {
   const body = await c.req.json();
@@ -19,7 +16,7 @@ app.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const projectId = c.get("projectId" as never) as string;
+  const projectId = c.get("projectId");
   const { platform, since, dryRun, llm } = parsed.data;
 
   const result = await mine({ platform, since, dryRun, llm });
@@ -72,7 +69,7 @@ app.post("/", async (c) => {
     await db.insert(sourcesMetadata).values({
       id: crypto.randomUUID(),
       noteId: note.id,
-      source: "flat-files", // closest match — no "mined" source type in schema
+      source: "mined",
       sourceId: candidate.sourceConversationId,
       importedAt: Date.now(),
       contentHash,

@@ -8,7 +8,7 @@ interface SearchOpts {
   offset?: number;
 }
 
-interface RawNoteRow {
+export interface RawNoteRow {
   id: string;
   project_id: string;
   title: string;

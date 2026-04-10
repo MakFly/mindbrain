@@ -2,6 +2,7 @@ import { db, sqlite } from "../db";
 import { notes, edges } from "../db/schema";
 import { eq, sql } from "drizzle-orm";
 import type { Note, Edge } from "@mindbrain/shared";
+import type { RawNoteRow } from "./search";
 
 interface RawEdgeRow {
   id: string;
@@ -10,18 +11,6 @@ interface RawEdgeRow {
   type: string;
   label: string;
   created_at: number;
-}
-
-interface RawNoteRow {
-  id: string;
-  project_id: string;
-  title: string;
-  content: string;
-  type: string;
-  tags: string;
-  metadata: string;
-  created_at: number;
-  updated_at: number;
 }
 
 function parseNote(row: RawNoteRow): Note {

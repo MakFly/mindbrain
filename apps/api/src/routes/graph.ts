@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { createLinkSchema } from "@mindbrain/shared";
+import type { AppEnv } from "../types";
 import {
   getSubGraph,
   getFullGraph,
@@ -7,11 +8,11 @@ import {
   createLink,
 } from "../services/graph";
 
-const app = new Hono();
+const app = new Hono<AppEnv>();
 
 // GET / — sub-graph or full project graph
 app.get("/", async (c) => {
-  const projectId = c.get("projectId") as string;
+  const projectId = c.get("projectId");
   const noteId = c.req.query("noteId");
   const depth = c.req.query("depth") ? Number(c.req.query("depth")) : 2;
 
@@ -53,7 +54,7 @@ app.post("/notes/:id/link", async (c) => {
 
 // POST /auto-link — generate edges between related notes using FTS5 cross-matching
 app.post("/auto-link", async (c) => {
-  const projectId = c.get("projectId") as string;
+  const projectId = c.get("projectId");
   const { sqlite } = await import("../db");
   const { edges: edgesTable } = await import("../db/schema");
   const { db: drizzle } = await import("../db");

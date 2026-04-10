@@ -1,11 +1,12 @@
 import { Hono } from "hono";
 import { sqlite } from "../db";
+import type { AppEnv } from "../types";
 
-const app = new Hono();
+const app = new Hono<AppEnv>();
 
 // GET / — list import sources with stats
 app.get("/", (c) => {
-  const projectId = c.get("projectId" as never) as string;
+  const projectId = c.get("projectId");
 
   const stats = sqlite
     .query<

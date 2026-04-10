@@ -4,13 +4,10 @@ import { getAdapter, detectAll } from "../services/adapters";
 import { createNote } from "../services/notes";
 import { db, sqlite } from "../db";
 import { sourcesMetadata } from "../db/schema";
-import { createHash } from "crypto";
+import { hashContent } from "../utils/hash";
+import type { AppEnv } from "../types";
 
-const app = new Hono();
-
-function hashContent(content: string): string {
-  return createHash("sha256").update(content.trim().toLowerCase()).digest("hex");
-}
+const app = new Hono<AppEnv>();
 
 app.post("/", async (c) => {
   const body = await c.req.json();
@@ -19,7 +16,7 @@ app.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const projectId = c.get("projectId" as never) as string;
+  const projectId = c.get("projectId");
   const { source, path, dryRun } = parsed.data;
 
   const adapter = getAdapter(source);

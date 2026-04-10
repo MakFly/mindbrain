@@ -3,6 +3,7 @@ import {
   createNoteSchema,
   updateNoteSchema,
 } from "@mindbrain/shared";
+import type { AppEnv } from "../types";
 import {
   createNote,
   getNote,
@@ -12,7 +13,7 @@ import {
   resolveNoteId,
 } from "../services/notes";
 
-const app = new Hono();
+const app = new Hono<AppEnv>();
 
 // POST / — create note
 app.post("/", async (c) => {
@@ -22,14 +23,14 @@ app.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const projectId = c.get("projectId" as never) as string;
+  const projectId = c.get("projectId");
   const note = await createNote(projectId, parsed.data);
   return c.json(note, 201);
 });
 
 // GET / — list notes
 app.get("/", async (c) => {
-  const projectId = c.get("projectId" as never) as string;
+  const projectId = c.get("projectId");
   const type = c.req.query("type");
   const tagsParam = c.req.query("tags");
   const tags = tagsParam ? tagsParam.split(",").map((t) => t.trim()) : undefined;

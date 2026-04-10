@@ -1,13 +1,14 @@
 import { Hono } from "hono";
+import type { AppEnv } from "../types";
 import { searchQuerySchema, contextRequestSchema } from "@mindbrain/shared";
 import { searchNotes } from "../services/search";
 import { getContextualNotes, formatAsMarkdown } from "../services/context";
 
-const app = new Hono();
+const app = new Hono<AppEnv>();
 
 // GET / — FTS5 full-text search
 app.get("/", async (c) => {
-  const projectId = c.get("projectId") as string;
+  const projectId = c.get("projectId");
 
   const raw = {
     q: c.req.query("q"),
@@ -43,7 +44,7 @@ app.get("/", async (c) => {
 
 // POST /context — contextual note retrieval
 app.post("/context", async (c) => {
-  const projectId = c.get("projectId") as string;
+  const projectId = c.get("projectId");
   const body = await c.req.json();
 
   const parsed = contextRequestSchema.safeParse(body);
