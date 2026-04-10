@@ -11,6 +11,7 @@
     "build:cli": "bun build apps/cli/src/index.ts --compile --outfile dist/mb"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.87.0",
     "pino": "^10.3.1"
   },
   "devDependencies": {
