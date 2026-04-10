@@ -658,10 +658,8 @@ const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
-  }, [])
+  // Fixed width for skeleton loading (avoids impure Math.random during render).
+  const width = "70%"
 
   return (
     <div
@@ -743,6 +741,7 @@ const SidebarMenuSubButton = React.forwardRef<
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
+/* eslint-disable react-refresh/only-export-components */
 export {
   Sidebar,
   SidebarContent,
@@ -769,3 +768,4 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+/* eslint-enable react-refresh/only-export-components */

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { UploadIcon, PickaxeIcon } from 'lucide-react';
-import { useSSEContext } from '../App';
+import { useSSEContext } from '../contexts/sse-context';
 
 const SOURCE_INFO: Record<string, { label: string; description: string }> = {
   'claude-mem': {
@@ -70,9 +70,21 @@ export function SourcesView() {
   const [mineResult, setMineResult] = useState<MineResult | null>(null);
   const [mineError, setMineError] = useState('');
 
-  useEffect(() => {
-    void loadSources();
+  const loadSources = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await api.getSources();
+      setSources(Array.isArray(result) ? result : []);
+    } catch (err) {
+      console.error('Failed to load sources:', err);
+    }
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadSources();
+  }, [loadSources]);
 
   const handleImportCompleted = useCallback((data: unknown) => {
     const result = data as { imported?: number; skipped?: number } | null;
@@ -82,7 +94,7 @@ export function SourcesView() {
       toast.success('Import completed');
     }
     void loadSources();
-  }, []);
+  }, [loadSources]);
 
   const handleMiningCompleted = useCallback((data: unknown) => {
     const result = data as { saved?: number; skipped?: number; candidates?: number } | null;
@@ -92,7 +104,7 @@ export function SourcesView() {
       toast.success('Mining completed');
     }
     void loadSources();
-  }, []);
+  }, [loadSources]);
 
   useEffect(() => {
     sse.on('import:completed', handleImportCompleted);
@@ -102,17 +114,6 @@ export function SourcesView() {
       sse.off('mining:completed', handleMiningCompleted);
     };
   }, [sse, handleImportCompleted, handleMiningCompleted]);
-
-  async function loadSources() {
-    setLoading(true);
-    try {
-      const result = await api.getSources();
-      setSources(Array.isArray(result) ? result : []);
-    } catch (err) {
-      console.error('Failed to load sources:', err);
-    }
-    setLoading(false);
-  }
 
   async function handleImport() {
     if (!importPath.trim()) {

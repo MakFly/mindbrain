@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 
 type EventCallback = (data: unknown) => void;
 
@@ -18,6 +18,7 @@ export function useSSE(): SSEHandle {
   const retryCountRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const unmountedRef = useRef(false);
+  const connectRef = useRef<(() => void) | null>(null);
 
   const connect = useCallback(() => {
     if (unmountedRef.current) return;
@@ -46,7 +47,7 @@ export function useSSE(): SSEHandle {
       retryCountRef.current += 1;
 
       timeoutRef.current = setTimeout(() => {
-        if (!unmountedRef.current) connect();
+        if (!unmountedRef.current) connectRef.current?.();
       }, backoff);
     };
 
@@ -84,6 +85,10 @@ export function useSSE(): SSEHandle {
       });
     }
   }, []);
+
+  useLayoutEffect(() => {
+    connectRef.current = connect;
+  });
 
   useEffect(() => {
     unmountedRef.current = false;

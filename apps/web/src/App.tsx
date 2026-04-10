@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { createContext, useContext } from 'react';
 import { NotesView } from './views/NotesView';
 import { GraphView } from './views/GraphView';
 import { SourcesView } from './views/SourcesView';
@@ -8,17 +7,8 @@ import { AppSidebar } from './components/app-sidebar';
 import { SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/sonner';
 import { useState } from 'react';
-import { useSSE, type SSEHandle } from './hooks/use-sse';
-
-export const SSEContext = createContext<SSEHandle>({
-  connected: false,
-  on: () => undefined,
-  off: () => undefined,
-});
-
-export function useSSEContext(): SSEHandle {
-  return useContext(SSEContext);
-}
+import { useSSE } from './hooks/use-sse';
+import { SSEContext } from './contexts/sse-context';
 
 function AppInner() {
   const [settingsOpen, setSettingsOpen] = useState(!localStorage.getItem('mindbrain-api-key'));

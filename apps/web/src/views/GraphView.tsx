@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useSSEContext } from '../App';
+import { useSSEContext } from '../contexts/sse-context';
 import { api, type Note, type GraphResult } from '../lib/api';
 import { toast } from 'sonner';
 import { GraphCanvas, type GraphNode, type GraphEdge, type Theme, darkTheme } from 'reagraph';
@@ -61,11 +61,7 @@ export function GraphView() {
   const [autoLinkLoading, setAutoLinkLoading] = useState(false);
   const notesRef = useRef<Note[]>([]);
 
-  useEffect(() => {
-    loadGraph();
-  }, [depth, maxEdges]);
-
-  async function loadGraph() {
+  const loadGraph = useCallback(async () => {
     setLoading(true);
     try {
       const data: GraphResult = await api.getGraph(depth);
@@ -112,7 +108,12 @@ export function GraphView() {
       console.error('Failed to load graph:', err);
     }
     setLoading(false);
-  }
+  }, [depth, maxEdges]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadGraph();
+  }, [loadGraph]);
 
   const handleNodeClick = useCallback((node: GraphNode) => {
     const note = notesRef.current.find((n) => n.id === node.id);
@@ -120,8 +121,8 @@ export function GraphView() {
   }, []);
 
   const handleGraphRefresh = useCallback(() => {
-    loadGraph();
-  }, []);
+    void loadGraph();
+  }, [loadGraph]);
 
   useEffect(() => {
     sse.on('edge:created', handleGraphRefresh);
@@ -139,7 +140,7 @@ export function GraphView() {
     try {
       const result = await api.autoLink();
       toast.success(`Auto-link complete: ${result.created} created, ${result.skipped} skipped`);
-      loadGraph();
+      void loadGraph();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Auto-link failed');
     }

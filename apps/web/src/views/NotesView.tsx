@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { SearchIcon, PlusIcon, PencilIcon, TrashIcon } from 'lucide-react';
-import { useSSEContext } from '../App';
+import { useSSEContext } from '../contexts/sse-context';
 
 type TypeColor = 'default' | 'secondary' | 'destructive' | 'outline';
 
@@ -94,25 +94,39 @@ export function NotesView() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  useEffect(() => {
-    void loadNotes();
+  const loadNotes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: { type?: string; limit?: number } = { limit: 200 };
+      if (typeFilter !== 'all') params.type = typeFilter;
+      const result = await api.listNotes(params);
+      setNotes(Array.isArray(result) ? result : []);
+    } catch (err) {
+      console.error('Failed to load notes:', err);
+    }
+    setLoading(false);
   }, [typeFilter]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadNotes();
+  }, [loadNotes]);
 
   const handleNoteCreated = useCallback((data: unknown) => {
     const note = data as { title?: string };
     toast.info(`Note added${note?.title ? `: ${note.title}` : ''}`);
     void loadNotes();
-  }, []);
+  }, [loadNotes]);
 
   const handleNoteUpdated = useCallback(() => {
     toast.info('Note updated');
     void loadNotes();
-  }, []);
+  }, [loadNotes]);
 
   const handleNoteDeleted = useCallback(() => {
     toast.info('Note deleted');
     void loadNotes();
-  }, []);
+  }, [loadNotes]);
 
   useEffect(() => {
     sse.on('note:created', handleNoteCreated);
@@ -124,19 +138,6 @@ export function NotesView() {
       sse.off('note:deleted', handleNoteDeleted);
     };
   }, [sse, handleNoteCreated, handleNoteUpdated, handleNoteDeleted]);
-
-  async function loadNotes() {
-    setLoading(true);
-    try {
-      const params: { type?: string; limit?: number } = { limit: 200 };
-      if (typeFilter !== 'all') params.type = typeFilter;
-      const result = await api.listNotes(params);
-      setNotes(Array.isArray(result) ? result : []);
-    } catch (err) {
-      console.error('Failed to load notes:', err);
-    }
-    setLoading(false);
-  }
 
   async function handleSearch() {
     if (!search.trim()) {
