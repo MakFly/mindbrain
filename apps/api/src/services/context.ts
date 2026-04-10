@@ -1,6 +1,6 @@
 import { sqlite } from "../db";
 import type { NoteType } from "@mindbrain/shared";
-import { sanitizeFtsQuery, type RawNoteRow } from "./search";
+import { type RawNoteRow } from "./search";
 
 interface ContextOpts {
   files: string[];
@@ -8,6 +8,11 @@ interface ContextOpts {
   tags?: string[];
   type?: NoteType;
   limit?: number;
+  // Configurable weights
+  titleWeight?: number;   // default 3.0
+  contentWeight?: number; // default 1.0
+  tagsWeight?: number;    // default 2.0
+  recencyDecay?: number;  // default 30 (days)
 }
 
 interface ScoredNote {
@@ -24,25 +29,51 @@ interface ScoredNote {
 }
 
 /**
+ * Build a phrase-aware FTS5 query for context searches.
+ *
+ * - Quoted phrases (e.g. "fix login") are kept as exact FTS5 phrases.
+ * - Unquoted words are individually quoted and OR-joined.
+ */
+function buildContextFtsQuery(raw: string): string {
+  const phrases: string[] = [];
+  // Extract quoted phrases first
+  const withoutPhrases = raw.replace(/"([^"]+)"/g, (_, phrase) => {
+    phrases.push(`"${phrase}"`);
+    return "";
+  });
+  // Process remaining words
+  const cleaned = withoutPhrases.replace(/[*():^{}~\-+<>]/g, " ").trim();
+  const words = cleaned.split(/\s+/).filter(Boolean).map((w) => `"${w}"`);
+  const allTerms = [...phrases, ...words];
+  if (allTerms.length === 0) return '""';
+  return allTerms.join(" OR ");
+}
+
+/**
  * Get contextually relevant notes for a given task and file set.
  *
  * Scoring:
- * 1. FTS5 BM25 rank (negated — lower is better in FTS5)
- * 2. File boost: x2 if note's metadata.files intersects request files
- * 3. Recency boost: 1 / (1 + daysOld / 30)
+ * 1. FTS5 BM25 rank with field weights (title ×3, content ×1, tags ×2 by default)
+ * 2. Graduated file boost based on overlap count and ratio
+ * 3. Recency boost: 1 / (1 + daysOld / recencyDecay)
  */
 export function getContextualNotes(
   projectId: string,
   opts: ContextOpts
 ): ScoredNote[] {
   const { files, task, tags, type, limit = 10 } = opts;
-  const sanitizedQuery = sanitizeFtsQuery(task);
+  const titleW = opts.titleWeight ?? 3.0;
+  const contentW = opts.contentWeight ?? 1.0;
+  const tagsW = opts.tagsWeight ?? 2.0;
+  const recencyDecay = opts.recencyDecay ?? 30;
 
-  // Step 1: FTS5 search — get 50 candidates
+  const ftsQuery = buildContextFtsQuery(task);
+
+  // Step 1: FTS5 search with field-weighted bm25 — get 50 candidates
   const candidates = sqlite
     .query<RawNoteRow, [string, string, number, number]>(
       `
-      SELECT n.*, bm25(notes_fts) as rank
+      SELECT n.*, bm25(notes_fts, ${titleW}, ${contentW}, ${tagsW}) as rank
       FROM notes_fts f
       JOIN notes n ON n.rowid = f.rowid
       WHERE notes_fts MATCH ?1 AND n.project_id = ?2
@@ -50,7 +81,7 @@ export function getContextualNotes(
       LIMIT ?3 OFFSET ?4
     `
     )
-    .all(sanitizedQuery, projectId, 50, 0);
+    .all(ftsQuery, projectId, 50, 0);
 
   const now = Date.now();
   const fileSet = new Set(files);
@@ -63,17 +94,26 @@ export function getContextualNotes(
     // Negate BM25 rank (FTS5 returns negative values, more negative = better match)
     const bm25Score = -row.rank;
 
-    // File boost: x2 if note's metadata.files intersects request files
+    // Graduated file boost based on overlap count and ratio
     let fileBoost = 1;
     if (fileSet.size > 0 && Array.isArray(parsedMetadata.files)) {
       const noteFiles = parsedMetadata.files as string[];
-      const hasOverlap = noteFiles.some((f) => fileSet.has(f));
-      if (hasOverlap) fileBoost = 2;
+      const matchCount = noteFiles.filter((f) => fileSet.has(f)).length;
+      if (matchCount > 0) {
+        const overlapRatio = matchCount / fileSet.size;
+        if (overlapRatio > 0.5) {
+          fileBoost = 3;
+        } else if (matchCount >= 3) {
+          fileBoost = 2;
+        } else {
+          fileBoost = 1.5;
+        }
+      }
     }
 
-    // Recency boost: 1 / (1 + daysOld / 30)
+    // Recency boost: 1 / (1 + daysOld / recencyDecay)
     const daysOld = (now - row.updated_at) / (1000 * 60 * 60 * 24);
-    const recencyBoost = 1 / (1 + daysOld / 30);
+    const recencyBoost = 1 / (1 + daysOld / recencyDecay);
 
     const score = bm25Score * fileBoost + recencyBoost;
 
@@ -121,5 +161,3 @@ export function formatAsMarkdown(notes: ScoredNote[]): string {
     })
     .join("\n\n---\n\n");
 }
-
-// TODO wave 2: LLM-filter with Haiku

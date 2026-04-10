@@ -51,4 +51,130 @@ app.post("/notes/:id/link", async (c) => {
   return c.json({ edge }, 201);
 });
 
+// POST /auto-link — generate edges between related notes using FTS5 cross-matching
+app.post("/auto-link", async (c) => {
+  const projectId = c.get("projectId") as string;
+  const { sqlite } = await import("../db");
+  const { edges: edgesTable } = await import("../db/schema");
+  const { db: drizzle } = await import("../db");
+
+  // Get all notes for this project
+  const allNotes = sqlite
+    .query<{ id: string; title: string; type: string; tags: string }, [string]>(
+      "SELECT id, title, type, tags FROM notes WHERE project_id = ?1"
+    )
+    .all(projectId);
+
+  if (allNotes.length === 0) {
+    return c.json({ created: 0, message: "No notes found" });
+  }
+
+  // Build existing edge set to avoid duplicates
+  const existingEdges = new Set<string>();
+  const existingRows = sqlite
+    .query<{ source_id: string; target_id: string }, [string]>(
+      `SELECT source_id, target_id FROM edges
+       WHERE source_id IN (SELECT id FROM notes WHERE project_id = ?1)
+       AND target_id IS NOT NULL`
+    )
+    .all(projectId);
+  for (const row of existingRows) {
+    existingEdges.add(`${row.source_id}:${row.target_id}`);
+    existingEdges.add(`${row.target_id}:${row.source_id}`);
+  }
+
+  // Strategy 1: Connect notes of the same type that share tags
+  const tagMap = new Map<string, string[]>(); // tag -> note ids
+  for (const note of allNotes) {
+    const tags = JSON.parse(note.tags) as string[];
+    for (const tag of tags) {
+      if (!tagMap.has(tag)) tagMap.set(tag, []);
+      tagMap.get(tag)!.push(note.id);
+    }
+  }
+
+  const newEdges: { id: string; sourceId: string; targetId: string; type: string; label: string; createdAt: number }[] = [];
+  const now = Date.now();
+  const addedPairs = new Set<string>();
+
+  // Tag-based connections
+  for (const [tag, noteIds] of tagMap) {
+    if (noteIds.length < 2 || noteIds.length > 50) continue; // skip too common tags
+    for (let i = 0; i < noteIds.length && i < 10; i++) {
+      for (let j = i + 1; j < noteIds.length && j < 10; j++) {
+        const key = `${noteIds[i]}:${noteIds[j]}`;
+        if (existingEdges.has(key) || addedPairs.has(key)) continue;
+        addedPairs.add(key);
+        addedPairs.add(`${noteIds[j]}:${noteIds[i]}`);
+        newEdges.push({
+          id: crypto.randomUUID(),
+          sourceId: noteIds[i],
+          targetId: noteIds[j],
+          type: "related",
+          label: tag,
+          createdAt: now,
+        });
+      }
+    }
+  }
+
+  // Strategy 2: FTS5 cross-matching — for each note, find top 2 similar notes by title
+  const processed = new Set<string>();
+  for (const note of allNotes.slice(0, 200)) { // limit to avoid timeout
+    if (processed.has(note.id)) continue;
+    processed.add(note.id);
+
+    // Extract meaningful words from title (3+ chars)
+    const words = note.title
+      .replace(/[^a-zA-ZÀ-ÿ0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length >= 3)
+      .slice(0, 3);
+
+    if (words.length === 0) continue;
+
+    const ftsQuery = words.map((w) => `"${w}"`).join(" OR ");
+
+    try {
+      const matches = sqlite
+        .query<{ id: string }, [string, string, string]>(
+          `SELECT n.id FROM notes_fts f
+           JOIN notes n ON n.rowid = f.rowid
+           WHERE notes_fts MATCH ?1 AND n.project_id = ?2 AND n.id != ?3
+           ORDER BY bm25(notes_fts)
+           LIMIT 3`
+        )
+        .all(ftsQuery, projectId, note.id);
+
+      for (const match of matches) {
+        const key = `${note.id}:${match.id}`;
+        if (existingEdges.has(key) || addedPairs.has(key)) continue;
+        addedPairs.add(key);
+        addedPairs.add(`${match.id}:${note.id}`);
+        newEdges.push({
+          id: crypto.randomUUID(),
+          sourceId: note.id,
+          targetId: match.id,
+          type: "related",
+          label: "similar",
+          createdAt: now,
+        });
+      }
+    } catch {
+      // FTS query might fail on some titles, skip
+    }
+  }
+
+  // Batch insert
+  if (newEdges.length > 0) {
+    const batchSize = 100;
+    for (let i = 0; i < newEdges.length; i += batchSize) {
+      const batch = newEdges.slice(i, i + batchSize);
+      await drizzle.insert(edgesTable).values(batch);
+    }
+  }
+
+  return c.json({ created: newEdges.length, tagBased: tagMap.size, ftsBased: processed.size });
+});
+
 export default app;
