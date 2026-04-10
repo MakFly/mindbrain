@@ -1,0 +1,8 @@
+# Mindbrain — Persistent Memory
+
+Usage:
+- Load context: `mb context -f <files> -t "<task>"`
+- Save notes: `mb save "Title" -t <type> <<< "Content"`
+- Search: `mb search "<query>"`
+
+Note types: feedback, debug, project, user, codebase, reference

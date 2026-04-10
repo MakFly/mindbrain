@@ -1,0 +1,14 @@
+## Mindbrain Memory System
+
+This project uses Mindbrain for persistent memory. Use the `mb` CLI to interact with it.
+
+### Commands
+- `mb context -f <files> -t "<task>"` — Get relevant memories for your current task
+- `mb save "<title>" -t <type>` — Save a note (types: user, feedback, project, reference, codebase, debug)
+- `mb search "<query>"` — Search existing notes
+- `mb mine --dry-run` — Extract notes from past conversations
+
+### When to Save
+- After user corrections → `mb save "..." -t feedback`
+- After fixing bugs → `mb save "..." -t debug`
+- After architecture decisions → `mb save "..." -t project`

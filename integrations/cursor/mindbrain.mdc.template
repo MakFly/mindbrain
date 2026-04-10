@@ -1,0 +1,23 @@
+---
+description: Mindbrain persistent memory system
+globs:
+alwaysApply: true
+---
+
+# Mindbrain Memory
+
+This project uses Mindbrain for persistent memory across sessions.
+
+## Commands
+
+- `mb context -f <files> -t "<task>"` — Recall relevant past knowledge
+- `mb save "<title>" -t <type>` — Save a note (user|feedback|project|reference|codebase|debug)
+- `mb search "<query>"` — Search notes
+- `mb mine --dry-run` — Extract notes from past conversations
+
+## Workflow
+
+1. **Start of session**: Run `mb context -f <current files> -t "<what you're doing>"` to load relevant memories
+2. **User corrects you**: `mb save "correction description" -t feedback`
+3. **Bug resolved**: `mb save "bug description and fix" -t debug`
+4. **Architecture decision**: `mb save "decision description" -t project`
