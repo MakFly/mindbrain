@@ -1,4 +1,13 @@
 import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 interface Props {
   open: boolean;
@@ -7,47 +16,62 @@ interface Props {
 
 export function SettingsDialog({ open, onOpenChange }: Props) {
   const [apiKey, setApiKey] = useState(localStorage.getItem('mindbrain-api-key') || '');
-
-  if (!open) return null;
+  const [apiUrl, setApiUrl] = useState(localStorage.getItem('mindbrain-api-url') || '');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background border rounded-lg p-6 w-96 shadow-xl">
-        <h2 className="text-lg font-semibold mb-4">Settings</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">API Key</label>
-            <input
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-96">
+        <DialogHeader>
+          <DialogTitle>Settings</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="api-key">API Key</Label>
+            <Input
+              id="api-key"
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="mb_..."
-              className="w-full mt-1 px-3 py-2 border rounded-md bg-background text-sm"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               Find it in your .mindbrain.json file
             </p>
           </div>
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => onOpenChange(false)}
-              className="px-4 py-2 text-sm rounded-md border hover:bg-accent"
-            >
+          <div className="space-y-1.5">
+            <Label htmlFor="api-url">API URL</Label>
+            <Input
+              id="api-url"
+              type="text"
+              value={apiUrl}
+              onChange={(e) => setApiUrl(e.target.value)}
+              placeholder="http://localhost:3456"
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty for default (localhost:3456)
+            </p>
+          </div>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => {
                 localStorage.setItem('mindbrain-api-key', apiKey);
+                if (apiUrl) {
+                  localStorage.setItem('mindbrain-api-url', apiUrl);
+                } else {
+                  localStorage.removeItem('mindbrain-api-url');
+                }
                 onOpenChange(false);
                 window.location.reload();
               }}
-              className="px-4 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Save
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

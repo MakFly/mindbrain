@@ -1,6 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { api, type Note, type GraphResult } from '../lib/api';
 import { GraphCanvas, type GraphNode, type GraphEdge, type Theme, darkTheme } from 'reagraph';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { XIcon } from 'lucide-react';
 
 const TYPE_COLORS: Record<string, string> = {
   user: '#4ade80',
@@ -63,22 +68,18 @@ export function GraphView() {
       notesRef.current = data.nodes;
       const nodeIds = new Set(data.nodes.map((n) => n.id));
 
-      // Filter valid edges and limit count
       const validEdges = data.edges
         .filter((e) => e.targetId && nodeIds.has(e.sourceId) && nodeIds.has(e.targetId!));
 
-      // Count connections per node
       const connectionCount = new Map<string, number>();
       for (const e of validEdges) {
         connectionCount.set(e.sourceId, (connectionCount.get(e.sourceId) || 0) + 1);
         connectionCount.set(e.targetId!, (connectionCount.get(e.targetId!) || 0) + 1);
       }
 
-      // Only keep nodes that have connections (reduces noise)
       const connectedNodeIds = new Set(connectionCount.keys());
       const isolatedNodes = data.nodes.filter((n) => !connectedNodeIds.has(n.id));
 
-      // Keep all connected nodes + a sample of isolated ones
       const nodesToShow = [
         ...data.nodes.filter((n) => connectedNodeIds.has(n.id)),
         ...isolatedNodes.slice(0, 30),
@@ -92,7 +93,6 @@ export function GraphView() {
         size: Math.max(3, 2 + (connectionCount.get(n.id) || 0) * 3),
       }));
 
-      // Limit edges to avoid hairball
       const graphEdges: GraphEdge[] = validEdges
         .filter((e) => showIds.has(e.sourceId) && showIds.has(e.targetId!))
         .slice(0, maxEdges)
@@ -122,46 +122,54 @@ export function GraphView() {
         <div className="p-3 border-b flex items-center gap-4 bg-background z-20 relative">
           <span className="text-sm font-medium">Knowledge Graph</span>
 
-          <div className="flex items-center gap-2 text-sm">
-            <label className="text-muted-foreground">Depth:</label>
-            <select
-              value={depth}
-              onChange={(e) => setDepth(Number(e.target.value))}
-              className="border rounded px-2 py-1 text-sm bg-background"
-            >
-              {[1, 2, 3, 4, 5].map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Depth</span>
+            <Select value={String(depth)} onValueChange={(v) => setDepth(Number(v))}>
+              <SelectTrigger className="w-20 h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[1, 2, 3, 4, 5].map((d) => (
+                  <SelectItem key={d} value={String(d)}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex items-center gap-2 text-sm">
-            <label className="text-muted-foreground">Max edges:</label>
-            <select
-              value={maxEdges}
-              onChange={(e) => setMaxEdges(Number(e.target.value))}
-              className="border rounded px-2 py-1 text-sm bg-background"
-            >
-              {[100, 200, 300, 500, 1000].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Max edges</span>
+            <Select value={String(maxEdges)} onValueChange={(v) => setMaxEdges(Number(v))}>
+              <SelectTrigger className="w-24 h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[100, 200, 300, 500, 1000].map((n) => (
+                  <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex gap-3 ml-auto">
+          <div className="flex gap-2 ml-auto flex-wrap">
             {Object.entries(TYPE_COLORS).map(([type, color]) => (
-              <div key={type} className="flex items-center gap-1">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                <span className="text-[10px] text-muted-foreground">{type}</span>
-              </div>
+              <Badge key={type} variant="outline" className="gap-1.5 text-[10px]">
+                <span
+                  className="inline-block w-2 h-2 rounded-full"
+                  style={{ backgroundColor: color }}
+                />
+                {type}
+              </Badge>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">
-            {nodes.length > 0 ? `${nodes.length} nodes, ${edges.length} edges` : ''}
-          </span>
+
+          {nodes.length > 0 && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              {nodes.length} nodes, {edges.length} edges
+            </span>
+          )}
         </div>
 
-        {/* Graph */}
+        {/* Graph canvas */}
         <div className="flex-1 relative" style={{ background: '#0f0f17' }}>
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center z-10 bg-[#0f0f17]">
@@ -192,36 +200,46 @@ export function GraphView() {
       {/* Selected node detail */}
       {selected && (
         <div className="w-80 border-l overflow-auto p-4 bg-background">
-          <button
-            onClick={() => setSelected(null)}
-            className="text-xs text-muted-foreground hover:text-foreground mb-3 block"
-          >
-            close
-          </button>
-          <div className="flex items-center gap-2 mb-3">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: TYPE_COLORS[selected.type] ?? DEFAULT_COLOR }}
-            />
-            <span className="text-xs text-muted-foreground">{selected.type}</span>
-          </div>
-          <h3 className="font-semibold mb-2">{selected.title}</h3>
-          {selected.tags.length > 0 && (
-            <div className="flex gap-1 flex-wrap mb-3">
-              {selected.tags.map((tag) => (
-                <span key={tag} className="px-1.5 py-0.5 text-[10px] bg-muted rounded">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="text-xs text-muted-foreground mb-3">
-            {new Date(selected.updatedAt).toLocaleDateString()}
-          </div>
-          <div className="text-sm whitespace-pre-wrap text-muted-foreground">
-            {selected.content.slice(0, 500)}
-            {selected.content.length > 500 && '...'}
-          </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-block w-3 h-3 rounded-full"
+                    style={{ backgroundColor: TYPE_COLORS[selected.type] ?? DEFAULT_COLOR }}
+                  />
+                  <Badge variant="outline" className="text-[10px]">{selected.type}</Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => setSelected(null)}
+                >
+                  <XIcon className="h-3 w-3" />
+                </Button>
+              </div>
+              <CardTitle className="text-sm mt-2">{selected.title}</CardTitle>
+              {selected.tags.length > 0 && (
+                <div className="flex gap-1 flex-wrap">
+                  {selected.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-[10px]">
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {new Date(selected.updatedAt).toLocaleDateString()}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+                {selected.content.slice(0, 500)}
+                {selected.content.length > 500 && '...'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

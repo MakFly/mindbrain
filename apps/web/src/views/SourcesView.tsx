@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, type SourceStat } from '../lib/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const SOURCE_INFO: Record<string, { label: string; description: string }> = {
   'claude-mem': {
@@ -54,52 +56,55 @@ export function SourcesView() {
             const stat = sources.find((s) => s.source === source);
 
             return (
-              <div
-                key={source}
-                className="border rounded-lg p-4 hover:bg-accent/30 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium">{info.label}</h3>
-                  {stat ? (
-                    <span className="px-2 py-0.5 text-xs bg-green-500/10 text-green-700 rounded-full border border-green-500/20">
-                      {stat.count} notes
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full">
-                      Not imported
-                    </span>
+              <Card key={source} className="transition-colors hover:bg-accent/20">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">{info.label}</CardTitle>
+                    {stat ? (
+                      <Badge variant="outline" className="bg-green-500/10 text-green-700 border-green-500/20">
+                        {stat.count} notes
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">Not imported</Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-sm text-muted-foreground">{info.description}</p>
+                  {stat && (
+                    <p className="text-xs text-muted-foreground">
+                      Last import: {new Date(stat.last_import).toLocaleString()}
+                    </p>
                   )}
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">{info.description}</p>
-                {stat && (
-                  <p className="text-xs text-muted-foreground">
-                    Last import: {new Date(stat.last_import).toLocaleString()}
-                  </p>
-                )}
-                <div className="mt-3">
-                  <p className="text-xs text-muted-foreground">
-                    Import via CLI:{' '}
-                    <code className="bg-muted px-1 rounded">mb import --from {source}</code>
-                  </p>
-                </div>
-              </div>
+                  <div className="pt-1">
+                    <p className="text-xs text-muted-foreground mb-1">Import via CLI:</p>
+                    <code className="text-xs bg-muted px-2 py-1 rounded block font-mono">
+                      mb import --from {source}
+                    </code>
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
       )}
 
-      <div className="mt-8 p-4 border rounded-lg bg-muted/30">
-        <h3 className="font-medium mb-2">Quick Import</h3>
-        <p className="text-sm text-muted-foreground mb-2">
-          Use the CLI to import from any source:
-        </p>
-        <div className="space-y-1 text-sm font-mono bg-background p-3 rounded border">
-          <p>mb import --from flat-files ~/.claude</p>
-          <p>mb import --from claude-mem ~/.claude-mem/db.sqlite</p>
-          <p>mb import --from mempalace ~/.mempalace</p>
-          <p>mb import --from cursor-rules ~/.cursor/rules</p>
-        </div>
-      </div>
+      <Card className="mt-8 bg-muted/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Quick Import</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Use the CLI to import from any source:
+          </p>
+          <div className="bg-background rounded border p-3 space-y-1 font-mono text-sm">
+            <p>mb import --from flat-files ~/.claude</p>
+            <p>mb import --from claude-mem ~/.claude-mem/db.sqlite</p>
+            <p>mb import --from mempalace ~/.mempalace</p>
+            <p>mb import --from cursor-rules ~/.cursor/rules</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
